@@ -1,6 +1,64 @@
+from enum import Enum
+from typing import Union
+
 import serial
 
-# TODO: Add enums to clarify options
+
+class DIRECTION(Enum):
+    LEFT = "l"
+    RIGHT = "r"
+    UP = "u"
+    DOWN = "d"
+
+
+class POSITION(Enum):
+    UPPER_LEFT = "0"
+    LOWER_LEFT = "1"
+    LOWER_RIGHT = "2"
+    UPPER_RIGHT = "3"
+    CENTER = "4"
+
+
+class IMAGING_PATH(Enum):
+    HORIZONTAL_ALTERNATING_DOWN = "0"
+    HORIZONTAL_ALTERNATING_UP = "1"
+    VERTICAL_ALTERNATING_RIGHT = "2"
+    VERTICAL_ALTERNATING_LEFT = "3"
+    HORIZONTAL_NONALTERNATING_DOWN = "4"
+    HORIZONTAL_NONALTERNATING_UP = "5"
+    VERTICAL_NONALTERNATING_RIGHT = "6"
+    VERTICAL_NONALTERNATING_LEFT = "7"
+
+
+class TIMING_PARAMETER(Enum):
+    DELAYED_START = "0"
+    TIME_INTERVAL = "1"
+    TIME_LAPSE_TIME_INTERVAL = "2"
+
+
+class SHOOTING_CONTROL(Enum):
+    EXIT = "0"
+    PAUSE = "1"
+    RESUMING = "2"
+    TIGGERING = "3"
+    PREVIOUS = "4"
+    NEXT = "5"
+
+
+class STATUS(Enum):
+    STOPPED = "0"
+    MOVING = "1"
+    WAITING = "2"
+    DELAYING = "3"
+    PAUSED = "4"
+    SHOOTING = "5"
+
+
+class PANORAMA_MODE(Enum):
+    PREVIEW = "0"
+    MATRIX = "1"
+    THREE_SIXTY = "2"
+    TIME_LAPSE = "3"
 
 
 def _fmt(val, length, precision=0, sign=False):
@@ -60,12 +118,8 @@ class IPANO:
 
     # Motion
 
-    def move(self, dir):
-        if dir not in "lrud":
-            raise ValueError(
-                f"Unknown direction: '{dir}'. Must be one of 'u', 'd', 'l' or 'r'."
-            )
-        self._communicate(f"mv{dir}", output=False)
+    def move(self, dir: DIRECTION):
+        self._communicate(f"mv{dir.value}", output=False)
 
     def stop(self, axis=None):
         if axis is None or axis.lower() == "none":
@@ -99,8 +153,10 @@ class IPANO:
         else:
             raise ValueError("id can only be 0 or 2.")
 
-    def start_panorama(self, mode, id):
-        self._communicate("SPA", f"{mode}{id}")
+    def start_panorama(
+        self, mode: PANORAMA_MODE, id: Union[POSITION, IMAGING_PATH]
+    ):
+        self._communicate("SPA", [mode.value, id.value])
 
     def set_timelapse(self, N, ang=0.0):
         self._communicate("STL", f"0{N:05}")
@@ -112,21 +168,21 @@ class IPANO:
         res = self._communicate("GTL")
         return float(res[:6]), float(res[6:])
 
-    def set_timing(self, mode, seconds):
-        self._communicate("STT", f"{mode}{int(seconds):07}")
+    def set_timing(self, mode: TIMING_PARAMETER, seconds):
+        self._communicate("STT", [mode.value, _fmt(seconds, 7)])
 
-    def get_timing(self, mode):
-        res = self._communicate("GTT", str(mode))
+    def get_timing(self, mode: TIMING_PARAMETER):
+        res = self._communicate("GTT", mode.value)
         return int(res)
 
-    def shooting_control(self, cmd):
-        self._communicate("SPC", str(cmd))
+    def shooting_control(self, cmd: SHOOTING_CONTROL):
+        self._communicate("SPC", cmd.value)
 
     def status(self):
         res = self._communicate("GAS")
         alt = float(res[:6]) / 100
         az = float(res[6:-1]) / 100
-        mode = res[-1]
+        mode = STATUS(res[-1])
         return alt, az, mode
 
     def set_fov(self, fov):
