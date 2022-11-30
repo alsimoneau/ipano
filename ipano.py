@@ -55,7 +55,6 @@ class STATUS(Enum):
 
 
 class PANORAMA_MODE(Enum):
-    PREVIEW = "0"
     MATRIX = "1"
     THREE_SIXTY = "2"
     TIME_LAPSE = "3"
@@ -176,12 +175,15 @@ class IPANO:
         else:
             raise BadParameter("ID can only be 0 or 2.", id)
 
-    def start_panorama(self, mode: PANORAMA_MODE, id: Union[POSITION, IMAGING_PATH]):
+    def preview_panorama(self, pos: POSITION):
+        self._communicate("SPA", ["0", pos.value])
+
+    def start_panorama(self, mode: PANORAMA_MODE, id: IMAGING_PATH):
         self._communicate("SPA", [mode.value, id.value])
 
     def set_timelapse(self, N, ang=0.0):
-        self._communicate("STL", [0, _fmt(N, 5)])
-        self._communicate("STL", [1, _fmt(ang, 3, 1, sign=True)])
+        self._communicate("STL", ["0", _fmt(N, 5)])
+        self._communicate("STL", ["1", _fmt(ang, 3, 1, sign=True)])
 
     def get_step(self):
         res = self._communicate("GTL")
