@@ -101,6 +101,9 @@ class IPANO:
             xonxoff=False,
         )
 
+    def __str__(self):
+        return f"iPANO serial interface: {self._serial.name}"
+
     def __del__(self):
         self._serial.close()
 
