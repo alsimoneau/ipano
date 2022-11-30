@@ -101,6 +101,9 @@ class IPANO:
             xonxoff=False,
         )
 
+    def __del__(self):
+        self._serial.close()
+
     def _communicate(self, instruction, data="", output=True):
         data = "".join(str(d) for d in data)
         if len(instruction) != 3:
