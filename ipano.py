@@ -175,10 +175,8 @@ class IPANO:
         self._communicate("SPA", [mode.value, id.value])
 
     def set_timelapse(self, N, ang=0.0):
-        self._communicate("STL", f"0{N:05}")
-        self._communicate(
-            "STL", f"1{'-' if ang < 0 else '+'}{int(abs(ang)/10):03}"
-        )
+        self._communicate("STL", [0, _fmt(N, 5)])
+        self._communicate("STL", [1, _fmt(ang, 3, 1, sign=True)])
 
     def get_step(self):
         res = self._communicate("GTL")
