@@ -212,7 +212,8 @@ class IPANO:
         self._communicate("SRE")
 
     def check_last(self):
-        return self._communicate("GRE")
+        res = self._communicate("GRE")
+        return PANORAMA_MODE(res)
 
     def get_progress(self):
         res = self._communicate("GPG")
