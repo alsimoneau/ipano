@@ -61,6 +61,19 @@ class PANORAMA_MODE(Enum):
     TIME_LAPSE = "3"
 
 
+class BadParameter(Exception):
+    def __init__(self, message, value=None):
+        self.value = value
+        self.message = message
+        super().__init__(self.message)
+
+    def __str__(self):
+        if self.value is None:
+            return self.mesage
+        else:
+            return f"[{self.value}] {self.message}"
+
+
 def _fmt(val, length, precision=0, sign=False):
     if sign:
         s = "-" if val < 0 else "+"
@@ -91,13 +104,11 @@ class IPANO:
     def _communicate(self, instruction, data="", output=True):
         data = "".join(str(d) for d in data)
         if len(instruction) != 3:
-            raise ValueError(
-                f"instruction must be a 3 character sequence. Received '{instruction}'."
+            raise BadParameter(
+                "Instruction must be a 3 character sequence.", instruction
             )
         if len(data) > 33:
-            raise ValueError(
-                f"data must be at most 33 chars. Received length {len(data)} sequence: '{data}'."
-            )
+            raise BadParameter("Data must be at most 33 chars.", len(data))
 
         message = f":01{instruction}{data}#"
         self._serial.write(message.encode())
@@ -129,9 +140,14 @@ class IPANO:
         elif axis.lower() == "alt":
             self._communicate("qAL")
         else:
-            raise ValueError("axis must be None, 'alt' or 'az'.")
+            raise BadParameter("Axis must be None, 'alt' or 'az'.", axis)
 
     def goto(self, alt, az):
+        if alt < -180 or alt > 180:
+            raise BadParameter("Altitude must be in [-180, 180] range.", alt)
+        if az < 0 or az > 360:
+            raise BadParameter("Azimuth must be in the [0, 360] range.", az)
+
         self._communicate("SSL", [_fmt(alt, 5, 2, sign=True), _fmt(az, 5, 2)])
 
     # Set and Operation
@@ -151,7 +167,7 @@ class IPANO:
         elif id == 2:
             self._communicate("SOP", "1")
         else:
-            raise ValueError("id can only be 0 or 2.")
+            raise BadParameter("ID can only be 0 or 2.", id)
 
     def start_panorama(
         self, mode: PANORAMA_MODE, id: Union[POSITION, IMAGING_PATH]
