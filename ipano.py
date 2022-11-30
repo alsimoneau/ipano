@@ -81,7 +81,7 @@ def _fmt(val, length, precision=0, sign=False):
     else:
         s = ""
 
-    val *= 10 ** precision
+    val *= 10**precision
 
     return f"{s}{int(val):0{length}}"
 
@@ -118,6 +118,7 @@ class IPANO:
 
         message = f":01{instruction}{data}#"
         self._serial.write(message.encode())
+
         if output:
             response = ""
             while not response.endswith("#"):
@@ -175,9 +176,7 @@ class IPANO:
         else:
             raise BadParameter("ID can only be 0 or 2.", id)
 
-    def start_panorama(
-        self, mode: PANORAMA_MODE, id: Union[POSITION, IMAGING_PATH]
-    ):
+    def start_panorama(self, mode: PANORAMA_MODE, id: Union[POSITION, IMAGING_PATH]):
         self._communicate("SPA", [mode.value, id.value])
 
     def set_timelapse(self, N, ang=0.0):
